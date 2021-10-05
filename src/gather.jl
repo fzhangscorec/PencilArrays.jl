@@ -44,7 +44,7 @@ function gather(x::PencilArray{T,N}, root::Integer=0) where {T, N}
         # (Maybe it works in the current master of MPI.jl?)
         buf = data isa Base.ReshapedArray ? parent(data) : data
         send_req = MPI.Isend(buf, root, mpi_tag, comm)
-        MPI.Wait!(send_req)
+        MPI.Wait(send_req)
         return nothing
     end
 
@@ -81,7 +81,7 @@ function gather(x::PencilArray{T,N}, root::Integer=0) where {T, N}
 
     # Copy remote data.
     for m = 2:Nproc
-        n, status = MPI.Waitany!(recv_req)
+        n = MPI.Waitany(recv_req)
         rrange = pen.axes_all[n]
         dest[rrange..., colons_extra_dims...] .= recv[n]
     end

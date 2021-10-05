@@ -490,7 +490,7 @@ function main()
         test_multiarrays(pen1, pen2, pen3)
     end
 
-    begin
+    @testset "Inference" begin
         periods = zeros(Int, length(proc_dims))
         comm_cart = MPI.Cart_create(comm, collect(proc_dims), periods, false)
         @inferred MPITopologies.create_subcomms(Val(2), comm_cart)
