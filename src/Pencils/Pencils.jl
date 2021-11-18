@@ -167,7 +167,8 @@ struct Pencil{
 
     function Pencil(
             topology::MPITopology{M}, size_global::Dims{N},
-            decomp_dims::Dims{M} = default_decomposition(N, Val(M));
+            decomp_dims::Dims{M} = default_decomposition(N, Val(M)),
+            axes_all = nothing;
             permute::AbstractPermutation = NoPermutation(),
             send_buf = UInt8[], recv_buf = UInt8[],
             timer = TimerOutput(),
@@ -175,22 +176,22 @@ struct Pencil{
         check_permutation(permute)
         _check_selected_dimensions(N, decomp_dims)
         decomp_dims = _sort_dimensions(decomp_dims)
-        axes_all = get_axes_matrix(decomp_dims, topology.dims, size_global)
-        axes_local = axes_all[coords_local(topology)...]
+        _axes_all = axes_all === nothing ? get_axes_matrix(decomp_dims, topology.dims, size_global) : axes_all
+        axes_local = _axes_all[coords_local(topology)...]
         axes_local_perm = permute * axes_local
         P = typeof(permute)
-        new{N,M,P}(topology, size_global, decomp_dims, axes_all, axes_local,
+        new{N,M,P}(topology, size_global, decomp_dims, _axes_all, axes_local,
                    axes_local_perm, permute, send_buf, recv_buf, timer)
     end
 
-    function Pencil(p::Pencil{N,M};
+    function Pencil(p::Pencil{N,M}, axes_all = nothing;
                     decomp_dims::Dims{M} = decomposition(p),
                     size_global::Dims{N} = size_global(p),
                     permute = permutation(p),
                     timer::TimerOutput = timer(p),
                     etc...,
                    ) where {N, M}
-        Pencil(p.topology, size_global, decomp_dims;
+        Pencil(p.topology, size_global, decomp_dims, axes_all;
                permute=permute, timer=timer,
                send_buf=p.send_buf, recv_buf=p.recv_buf,
                etc...)
